@@ -37,7 +37,7 @@ function initTheme() {
 }
 
 function normalizeRow(row) {
-  const rawCinemaName = (row.cinename || "").trim();
+  const rawCinemaName = (row.cinenom || row.cinename || "").trim();
   const rawCinemaBrand = (row.cineenseigne || "").trim();
   const rawTag = (row.tag || "").trim();
 
@@ -73,7 +73,6 @@ function normalizeRow(row) {
     lon: row["_coords.lon"] || null
   };
 }
-
 function formatDate(dateString) {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString("fr-FR", {
