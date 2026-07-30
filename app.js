@@ -129,7 +129,7 @@ async function loadMoreShows() {
   if (!state.nextUrl || state.isLoadingMore) return;
 
   state.isLoadingMore = true;
-  setStatus("Chargement de séances supplémentaires…");
+  setStatus("Chargement de nouvelles séances depuis l'API…");
 
   try {
     const res = await fetch(state.nextUrl);
