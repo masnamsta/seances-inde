@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Séances Indé</title>
+  <meta name="description" content="La programmation des cinémas indépendants, par film, par ville et par séance." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./style.css" />
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Aller au contenu</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img" aria-label="Logo Séances Indé">
+            <rect x="10" y="12" width="44" height="40" rx="10" fill="none" stroke="currentColor" stroke-width="4"></rect>
+            <path d="M24 22h16M24 32h16M24 42h10" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="eyebrow">Programmation cinéma</p>
+          <h1>Séances Indé</h1>
+        </div>
+      </div>
+
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Changer de thème">
+        ◐
+      </button>
+    </div>
+  </header>
+
+  <main id="content">
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">Cinémas indépendants</p>
+          <h2>Trouver un film, une salle, une séance.</h2>
+          <p class="hero-text">
+            Explore la programmation des cinémas indépendants à partir d’une base de données ouverte :
+            recherche par titre, filtre par ville, et repère rapidement les séances du jour.
+          </p>
+        </div>
+
+        <div class="hero-panel">
+          <label class="field">
+            <span>Rechercher un film</span>
+            <input id="search-input" type="search" placeholder="Ex. documentaire, animation, Minions…" />
+          </label>
+
+          <div class="filters-grid">
+            <label class="field">
+              <span>Ville</span>
+              <select id="city-filter">
+                <option value="">Toutes les villes</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Date</span>
+              <input id="date-filter" type="date" />
+            </label>
+          </div>
+
+          <div class="hero-actions">
+            <button id="reset-filters" class="btn btn-secondary" type="button">Réinitialiser</button>
+            <button id="refresh-data" class="btn btn-primary" type="button">Rafraîchir</button>
+          </div>
+
+          <p id="status" class="status" aria-live="polite">Chargement des séances…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabs-section">
+      <div class="container">
+        <nav class="tabs" aria-label="Navigation principale">
+          <button class="tab is-active" data-view="home" type="button">Accueil</button>
+          <button class="tab" data-view="agenda" type="button">Agenda</button>
+          <button class="tab" data-view="films" type="button">Films</button>
+          <button class="tab" data-view="cinemas" type="button">Cinémas</button>
+        </nav>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div class="container">
+        <div id="content-area" class="content-area">
+          <div class="loading-grid">
+            <div class="skeleton card-skeleton"></div>
+            <div class="skeleton card-skeleton"></div>
+            <div class="skeleton card-skeleton"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
