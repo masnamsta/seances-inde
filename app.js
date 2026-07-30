@@ -210,18 +210,20 @@ function groupByCinema(items) {
   const map = new Map();
 
   items.forEach(item => {
-    const key = item.cinemaId || `${item.city}-${item.address}`;
+    const key = item.cinemaId || `${item.city || ""}-${item.address || ""}`;
+
     if (!map.has(key)) {
       map.set(key, {
-        cinemaId: item.cinemaId,
-        name: item.cinemaName || "Cinéma indépendant",
-        city: item.city,
-        address: item.address,
-        lat: item.lat,
-        lon: item.lon,
+        cinemaId: item.cinemaId || null,
+        name: item.cinemaName || item.cinema || item.theater || item.venue || "Cinéma indépendant",
+        city: item.city || "",
+        address: item.address || "",
+        lat: item.lat || null,
+        lon: item.lon || null,
         shows: []
       });
     }
+
     map.get(key).shows.push(item);
   });
 
