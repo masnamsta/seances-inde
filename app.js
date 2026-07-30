@@ -523,7 +523,12 @@ function bindDynamicEvents() {
   });
 }
 function renderLoadMoreButton() {
-  if (!state.nextUrl) return "";
+  const hasActiveFilters =
+    state.filters.query.trim() !== "" ||
+    state.filters.city !== "" ||
+    state.filters.date !== "";
+
+  if (!state.nextUrl || hasActiveFilters) return "";
 
   return `
     <div style="margin-top:1.5rem; display:flex; justify-content:center;">
