@@ -8,6 +8,8 @@ const state = {
   selectedFilmId: null,
   selectedFilmTitle: "",
   previousView: "home",
+  nextUrl: null,
+  isLoadingMore: false,
   filters: {
     query: "",
     city: "",
@@ -106,9 +108,10 @@ async function fetchShows() {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Réponse API invalide");
 
-    const json = await res.json();
+      const json = await res.json();
     state.raw = json.results || [];
     state.shows = state.raw.map(normalizeRow);
+    state.nextUrl = json.next || null;
     populateCityFilter();
     applyFilters();
     setStatus(`${state.shows.length} séances chargées.`);
@@ -122,7 +125,34 @@ async function fetchShows() {
     `;
   }
 }
+async function loadMoreShows() {
+  if (!state.nextUrl || state.isLoadingMore) return;
 
+  state.isLoadingMore = true;
+  setStatus("Chargement de séances supplémentaires…");
+
+  try {
+    const res = await fetch(state.nextUrl);
+    if (!res.ok) throw new Error("Réponse API invalide");
+
+    const json = await res.json();
+    const newRaw = json.results || [];
+    const newShows = newRaw.map(normalizeRow);
+
+    state.raw = [...state.raw, ...newRaw];
+    state.shows = [...state.shows, ...newShows];
+    state.nextUrl = json.next || null;
+
+    populateCityFilter();
+    applyFilters();
+    setStatus(`${state.shows.length} séances chargées.`);
+  } catch (error) {
+    console.error(error);
+    setStatus("Impossible de charger plus de séances.");
+  } finally {
+    state.isLoadingMore = false;
+  }
+}
 function populateCityFilter() {
   const cities = [...new Set(state.shows.map(item => item.city).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, "fr")
@@ -293,8 +323,12 @@ function renderHome() {
         ${topCinemas.map(cinema => renderCinemaCard(cinema)).join("")}
       </div>
     </section>
+
+    ${renderLoadMoreButton()}
   `;
+
   bindDynamicEvents();
+  document.getElementById("load-more-btn")?.addEventListener("click", loadMoreShows);
 }
 
 function renderAgenda() {
@@ -305,11 +339,13 @@ function renderAgenda() {
         <h3>Agenda</h3>
         <p class="small">${sorted.length} séance(s)</p>
       </div>
-      <div class="list">
+          <div class="list">
         ${sorted.map(show => renderShowItem(show)).join("")}
       </div>
+      ${renderLoadMoreButton()}
     </section>
   `;
+  document.getElementById("load-more-btn")?.addEventListener("click", loadMoreShows);
 }
 
 function renderFilms() {
@@ -320,12 +356,14 @@ function renderFilms() {
         <h3>Films</h3>
         <p class="small">${films.length} film(s)</p>
       </div>
-      <div class="grid grid-cards">
+        <div class="grid grid-cards">
         ${films.map(film => renderFilmCard(film)).join("")}
       </div>
+      ${renderLoadMoreButton()}
     </section>
   `;
   bindDynamicEvents();
+  document.getElementById("load-more-btn")?.addEventListener("click", loadMoreShows);
 }
 
 function renderCinemas() {
@@ -336,12 +374,14 @@ function renderCinemas() {
         <h3>Cinémas</h3>
         <p class="small">${cinemas.length} cinéma(s)</p>
       </div>
-      <div class="grid grid-cards">
+          <div class="grid grid-cards">
         ${cinemas.map(cinema => renderCinemaCard(cinema)).join("")}
       </div>
+      ${renderLoadMoreButton()} 
     </section>
   `;
   bindDynamicEvents();
+  document.getElementById("load-more-btn")?.addEventListener("click", loadMoreShows);
 }
 function renderFilmDetail() {
   const film = getSelectedFilmData();
@@ -481,6 +521,17 @@ function bindDynamicEvents() {
       }
     });
   });
+}
+function renderLoadMoreButton() {
+  if (!state.nextUrl) return "";
+
+  return `
+    <div style="margin-top:1.5rem; display:flex; justify-content:center;">
+      <button id="load-more-btn" class="btn btn-secondary" type="button">
+        ${state.isLoadingMore ? "Chargement..." : "Charger plus"}
+      </button>
+    </div>
+  `;
 }
 searchInput.addEventListener("input", e => {
   state.filters.query = e.target.value;
