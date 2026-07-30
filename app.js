@@ -170,10 +170,20 @@ function applyFilters() {
   state.filtered = state.shows.filter(item => {
     const title = (item.title || "").toLowerCase();
     const genre = (item.genre || "").toLowerCase();
+    const director = (item.director || "").toLowerCase();
+    const cast = (item.cast || "").toLowerCase();
+    const screenwriter = (item.screenwriter || item.writer || item.writers || "").toLowerCase();
     const cityName = item.city || "";
     const itemDate = item.start ? item.start.slice(0, 10) : "";
 
-    const matchQuery = !q || title.includes(q) || genre.includes(q);
+    const matchQuery =
+      !q ||
+      title.includes(q) ||
+      genre.includes(q) ||
+      director.includes(q) ||
+      cast.includes(q) ||
+      screenwriter.includes(q);
+
     const matchCity = !city || cityName === city;
     const matchDate = !date || itemDate === date;
 
