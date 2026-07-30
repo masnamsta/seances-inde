@@ -37,6 +37,15 @@ function initTheme() {
 }
 
 function normalizeRow(row) {
+  const rawCinemaName = (row.cinename || "").trim();
+  const rawCinemaBrand = (row.cineenseigne || "").trim();
+  const rawTag = (row.tag || "").trim();
+
+  const genericCinemaNames = ["CINEMA", "CINÉMA", "CINE"];
+  const cinemaName = genericCinemaNames.includes(rawCinemaName.toUpperCase())
+    ? (rawCinemaBrand || rawTag || rawCinemaName)
+    : (rawCinemaName || rawCinemaBrand || rawTag || "");
+
   return {
     showId: row.showid || "",
     filmId: row.filmid || "",
@@ -52,7 +61,7 @@ function normalizeRow(row) {
     version: row.filmversion || "",
     audio: row.filmaudio || "",
     cinemaId: row.cineid || "",
-    cinemaName: row.cinename || row.cineenseigne || row.tag || "",
+    cinemaName: cinemaName,
     address: row.cineadresse || "",
     city: row.cineville || "",
     postalCode: row.cinecp || "",
