@@ -441,6 +441,12 @@ function renderCinemaDetail() {
     return;
   }
 
+  const now = new Date();
+
+  const upcomingShows = cinema.shows
+    .filter(show => show.start && new Date(show.start) >= now)
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+
   contentArea.innerHTML = `
     <section>
       <button class="btn btn-secondary" id="back-to-previous-view" type="button" style="margin-bottom:1rem;">
@@ -453,11 +459,11 @@ function renderCinemaDetail() {
           <p class="meta">${escapeHtml(cinema.city || "Ville inconnue")}</p>
           <p class="small">${escapeHtml(cinema.address || "Adresse non renseignée")}</p>
         </div>
-        <p class="small">${cinema.shows.length} séance(s)</p>
+        <p class="small">${upcomingShows.length} séance(s) à venir</p>
       </div>
 
       <div class="list" style="margin-top:1.5rem;">
-        ${cinema.shows.map(show => renderShowItem(show)).join("")}
+        ${upcomingShows.map(show => renderShowItem(show)).join("")}
       </div>
     </section>
   `;
