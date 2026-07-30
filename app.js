@@ -5,13 +5,15 @@ const state = {
   shows: [],
   filtered: [],
   activeView: "home",
+  selectedFilmId: null,
+  selectedFilmTitle: "",
+  previousView: "home",
   filters: {
     query: "",
     city: "",
     date: ""
   }
 };
-
 const contentArea = document.getElementById("content-area");
 const statusEl = document.getElementById("status");
 const searchInput = document.getElementById("search-input");
@@ -195,7 +197,29 @@ function groupByCinema(items) {
 
   return [...map.values()].sort((a, b) => (a.city || "").localeCompare(b.city || "", "fr"));
 }
+function openFilmDetail(filmId, filmTitle = "") {
+  state.selectedFilmId = filmId || null;
+  state.selectedFilmTitle = filmTitle || "";
+  state.previousView = state.activeView;
+  state.activeView = "film-detail";
+  renderView();
+}
 
+function closeFilmDetail() {
+  state.selectedFilmId = null;
+  state.selectedFilmTitle = "";
+  state.activeView = state.previousView || "films";
+  renderView();
+}
+
+function getSelectedFilmData() {
+  const grouped = groupByFilm(state.filtered);
+  return grouped.find(film =>
+    state.selectedFilmId
+      ? film.filmId === state.selectedFilmId
+      : film.title === state.selectedFilmTitle
+  );
+}
 function getTodayShows(items) {
   const today = new Date().toISOString().slice(0, 10);
   return items.filter(item => item.start && item.start.slice(0, 10) === today);
@@ -229,6 +253,7 @@ function renderView() {
   if (state.activeView === "agenda") renderAgenda();
   if (state.activeView === "films") renderFilms();
   if (state.activeView === "cinemas") renderCinemas();
+  if (state.activeView === "film-detail") renderFilmDetail(); 
 }
 
 function renderHome() {
@@ -269,6 +294,7 @@ function renderHome() {
       </div>
     </section>
   `;
+  bindDynamicEvents();
 }
 
 function renderAgenda() {
@@ -299,6 +325,7 @@ function renderFilms() {
       </div>
     </section>
   `;
+  bindDynamicEvents();
 }
 
 function renderCinemas() {
@@ -314,8 +341,68 @@ function renderCinemas() {
       </div>
     </section>
   `;
+  bindDynamicEvents();
 }
+function renderFilmDetail() {
+  const film = getSelectedFilmData();
 
+  if (!film) {
+    contentArea.innerHTML = `
+      <div class="empty-state">
+        <p>Impossible de retrouver ce film dans les résultats actuels.</p>
+        <p style="margin-top:1rem;">
+          <button class="btn btn-secondary" type="button" id="back-to-list">Retour</button>
+        </p>
+      </div>
+    `;
+
+    document.getElementById("back-to-list")?.addEventListener("click", closeFilmDetail);
+    return;
+  }
+
+  const sortedShows = [...film.shows].sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  contentArea.innerHTML = `
+    <section class="film-detail">
+      <div class="detail-back">
+        <button class="btn btn-secondary" type="button" id="back-to-list">← Retour</button>
+      </div>
+
+      <article class="detail-layout">
+        <div class="detail-poster-wrap">
+          ${film.poster ? `<img class="detail-poster" src="${escapeAttribute(film.poster)}" alt="Affiche de ${escapeAttribute(film.title)}" loading="lazy">` : `<div class="detail-poster detail-poster-fallback"></div>`}
+        </div>
+
+        <div class="detail-main">
+          <span class="pill">${film.shows.length} séance(s)</span>
+          <h3 class="detail-title">${escapeHtml(film.title)}</h3>
+
+          <div class="detail-meta">
+            ${film.genre ? `<span>${escapeHtml(film.genre)}</span>` : ""}
+            ${film.duration ? `<span>${escapeHtml(formatDuration(film.duration))}</span>` : ""}
+            ${film.director ? `<span>Réalisation : ${escapeHtml(film.director)}</span>` : ""}
+          </div>
+
+          ${film.storyline ? `
+            <div class="detail-block">
+              <h4>Synopsis</h4>
+              <p>${escapeHtml(film.storyline)}</p>
+            </div>
+          ` : ""}
+
+          <div class="detail-block">
+            <h4>Séances</h4>
+            <div class="list">
+              ${sortedShows.map(show => renderShowItem(show)).join("")}
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  `;
+
+  document.getElementById("back-to-list")?.addEventListener("click", closeFilmDetail);
+}
 function renderShowItem(show) {
   return `
     <article class="show-item">
@@ -341,8 +428,9 @@ function renderShowItem(show) {
 
 function renderFilmCard(film) {
   const firstShow = [...film.shows].sort((a, b) => new Date(a.start) - new Date(b.start))[0];
+
   return `
-    <article class="card">
+    <article class="card film-card" data-film-id="${escapeAttribute(film.filmId || "")}" data-film-title="${escapeAttribute(film.title)}" tabindex="0" role="button" aria-label="Voir le détail du film ${escapeAttribute(film.title)}">
       ${film.poster ? `<img class="poster" src="${escapeAttribute(film.poster)}" alt="Affiche de ${escapeAttribute(film.title)}" loading="lazy">` : ""}
       <div class="card-body">
         <span class="pill">${film.shows.length} séance(s)</span>
@@ -354,7 +442,6 @@ function renderFilmCard(film) {
     </article>
   `;
 }
-
 function renderCinemaCard(cinema) {
   const filmCount = new Set(cinema.shows.map(item => item.filmId || item.title)).size;
   return `
@@ -382,7 +469,19 @@ function escapeHtml(value) {
 function escapeAttribute(value) {
   return escapeHtml(value);
 }
+function bindDynamicEvents() {
+  document.querySelectorAll(".film-card").forEach(card => {
+    const open = () => openFilmDetail(card.dataset.filmId || null, card.dataset.filmTitle || "");
 
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
+    });
+  });
+}
 searchInput.addEventListener("input", e => {
   state.filters.query = e.target.value;
   applyFilters();
