@@ -353,19 +353,25 @@ function renderHome() {
 }
 
 function renderAgenda() {
-  const sorted = [...state.filtered].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const now = new Date();
+
+  const sorted = [...state.filtered]
+    .filter(show => show.start && new Date(show.start) >= now)
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+
   contentArea.innerHTML = `
     <section>
       <div class="section-title">
         <h3>Agenda</h3>
         <p class="small">${sorted.length} séance(s)</p>
       </div>
-          <div class="list">
+      <div class="list">
         ${sorted.map(show => renderShowItem(show)).join("")}
       </div>
       ${renderLoadMoreButton()}
     </section>
   `;
+
   document.getElementById("load-more-btn")?.addEventListener("click", loadMoreShows);
 }
 
