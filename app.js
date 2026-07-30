@@ -212,10 +212,16 @@ function groupByCinema(items) {
   items.forEach(item => {
     const key = item.cinemaId || `${item.city || ""}-${item.address || ""}`;
 
+    const rawName = (item.cinemaName || "").trim();
+    const genericNames = ["CINEMA", "CINÉMA", "CINE", "CINEMA INDEPENDANT", "CINÉMA INDÉPENDANT"];
+    const normalizedName = genericNames.includes(rawName.toUpperCase())
+      ? `Cinéma de ${item.city || "la ville"}`
+      : (rawName || `Cinéma de ${item.city || "la ville"}`);
+
     if (!map.has(key)) {
       map.set(key, {
         cinemaId: item.cinemaId || null,
-        name: item.cinemaName || item.cinema || item.theater || item.venue || "Cinéma indépendant",
+        name: normalizedName,
         city: item.city || "",
         address: item.address || "",
         lat: item.lat || null,
