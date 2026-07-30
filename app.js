@@ -601,12 +601,7 @@ function bindDynamicEvents() {
   });
 }
 function renderLoadMoreButton() {
-  const hasActiveFilters =
-    state.filters.query.trim() !== "" ||
-    state.filters.city !== "" ||
-    state.filters.date !== "";
-
-  if (!state.nextUrl || hasActiveFilters) return "";
+  if (!state.nextUrl) return "";
 
   return `
     <div style="margin-top:1.5rem; display:flex; justify-content:center;">
