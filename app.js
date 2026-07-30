@@ -234,7 +234,12 @@ function openFilmDetail(filmId, filmTitle = "") {
   state.activeView = "film-detail";
   renderView();
 }
-
+function openCinemaDetail(cinemaName = "") {
+  state.selectedCinemaName = cinemaName || "";
+  state.previousView = state.activeView;
+  state.activeView = "cinema-detail";
+  renderView();
+}
 function closeFilmDetail() {
   state.selectedFilmId = null;
   state.selectedFilmTitle = "";
@@ -270,6 +275,16 @@ function renderView() {
     tab.classList.toggle("is-active", tab.dataset.view === state.activeView);
   });
 
+  if (state.activeView === "film-detail") {
+    renderFilmDetail();
+    return;
+  }
+
+  if (state.activeView === "cinema-detail") {
+    renderCinemaDetail();
+    return;
+  }
+
   if (!state.filtered.length) {
     contentArea.innerHTML = `
       <div class="empty-state">
@@ -283,9 +298,7 @@ function renderView() {
   if (state.activeView === "agenda") renderAgenda();
   if (state.activeView === "films") renderFilms();
   if (state.activeView === "cinemas") renderCinemas();
-  if (state.activeView === "film-detail") renderFilmDetail(); 
 }
-
 function renderHome() {
   const todayShows = getTodayShows(state.filtered).slice(0, 8);
   const topFilms = getTopFilms(state.filtered, 6);
@@ -382,6 +395,45 @@ function renderCinemas() {
   `;
   bindDynamicEvents();
   document.getElementById("load-more-btn")?.addEventListener("click", loadMoreShows);
+}
+function renderCinemaDetail() {
+  const cinemaName = state.selectedCinemaName || "";
+  const cinema = groupByCinema(state.filtered).find(item => item.name === cinemaName);
+
+  if (!cinema) {
+    contentArea.innerHTML = `
+      <div class="empty-state">
+        <p>Impossible de retrouver ce cinéma dans les résultats actuels.</p>
+      </div>
+    `;
+    return;
+  }
+
+  contentArea.innerHTML = `
+    <section>
+      <button class="btn btn-secondary" id="back-to-previous-view" type="button" style="margin-bottom:1rem;">
+        ← Retour
+      </button>
+
+      <div class="section-title">
+        <div>
+          <h3>${escapeHtml(cinema.name || "Cinéma indépendant")}</h3>
+          <p class="meta">${escapeHtml(cinema.city || "Ville inconnue")}</p>
+          <p class="small">${escapeHtml(cinema.address || "Adresse non renseignée")}</p>
+        </div>
+        <p class="small">${cinema.shows.length} séance(s)</p>
+      </div>
+
+      <div class="list" style="margin-top:1.5rem;">
+        ${cinema.shows.map(show => renderShowItem(show)).join("")}
+      </div>
+    </section>
+  `;
+
+  document.getElementById("back-to-previous-view")?.addEventListener("click", () => {
+    state.activeView = state.previousView || "cinemas";
+    renderView();
+  });
 }
 function renderFilmDetail() {
   const film = getSelectedFilmData();
@@ -484,11 +536,17 @@ function renderFilmCard(film) {
 }
 function renderCinemaCard(cinema) {
   const filmCount = new Set(cinema.shows.map(item => item.filmId || item.title)).size;
+  const cinemaName = cinema.name || "Cinéma indépendant";
+
   return `
-    <article class="card">
+    <article class="card cinema-card"
+             data-cinema-name="${escapeHtml(cinemaName)}"
+             tabindex="0"
+             role="button"
+             aria-label="Voir la programmation du cinéma ${escapeHtml(cinemaName)}">
       <div class="card-body">
         <span class="pill">${cinema.shows.length} séance(s)</span>
-        <h3 style="margin-top:0.75rem;">${escapeHtml(cinema.name || "Cinéma indépendant")}</h3>
+        <h3 style="margin-top:0.75rem;">${escapeHtml(cinemaName)}</h3>
         <p class="meta">${escapeHtml(cinema.city || "Ville inconnue")}</p>
         <p class="small">${escapeHtml(cinema.address || "Adresse non renseignée")}</p>
         <p class="small">${filmCount} film(s) programmé(s)</p>
@@ -511,13 +569,25 @@ function escapeAttribute(value) {
 }
 function bindDynamicEvents() {
   document.querySelectorAll(".film-card").forEach(card => {
-    const open = () => openFilmDetail(card.dataset.filmId || null, card.dataset.filmTitle || "");
+    const openFilm = () => openFilmDetail(card.dataset.filmId || null, card.dataset.filmTitle || "");
 
-    card.addEventListener("click", open);
+    card.addEventListener("click", openFilm);
     card.addEventListener("keydown", e => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        open();
+        openFilm();
+      }
+    });
+  });
+
+  document.querySelectorAll(".cinema-card").forEach(card => {
+    const openCinema = () => openCinemaDetail(card.dataset.cinemaName || "");
+
+    card.addEventListener("click", openCinema);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openCinema();
       }
     });
   });
